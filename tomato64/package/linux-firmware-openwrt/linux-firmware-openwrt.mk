@@ -28,4 +28,14 @@ define LINUX_FIRMWARE_OPENWRT_INSTALL_TARGET_CMDS
 endef
 endif
 
+ifeq ($(BR2_PACKAGE_PLATFORM_NEO3),y)
+define LINUX_FIRMWARE_OPENWRT_INSTALL_TARGET_CMDS
+	mkdir -p $(TARGET_DIR)/lib/firmware/rtl_nic
+	cp $(@D)/rtl_nic/rtl810* $(TARGET_DIR)/lib/firmware/rtl_nic
+	cp $(@D)/rtl_nic/rtl812* $(TARGET_DIR)/lib/firmware/rtl_nic
+	cp $(@D)/rtl_nic/rtl8168* $(TARGET_DIR)/lib/firmware/rtl_nic
+	cp $(@D)/rtl_nic/rtl84* $(TARGET_DIR)/lib/firmware/rtl_nic
+endef
+endif
+
 $(eval $(generic-package))

@@ -18,6 +18,9 @@ mt6000: .configure-mt6000
 rpi4: .configure-rpi4
 	make -C src/buildroot
 
+neo3: .configure-neo3
+	make -C src/buildroot
+
 bpi-r3: .configure-bpi-r3
 	make -C src/buildroot
 
@@ -34,6 +37,9 @@ mt6000-menuconfig: .configure-mt6000
 	make -C src/buildroot menuconfig
 
 rpi4-menuconfig: .configure-rpi4
+	make -C src/buildroot menuconfig
+
+neo3-menuconfig: .configure-neo3
 	make -C src/buildroot menuconfig
 
 bpi-r3-menuconfig: .configure-bpi-r3
@@ -64,6 +70,11 @@ distclean:
 
 .configure-rpi4: .patch
 	make -C src/buildroot BR2_EXTERNAL=../../tomato64 rpi4_defconfig
+	@touch $@
+	@touch .configure
+
+.configure-neo3: .download-rockchip-kernel .patch
+	make -C src/buildroot BR2_EXTERNAL=../../tomato64 neo3_defconfig
 	@touch $@
 	@touch .configure
 
@@ -118,8 +129,7 @@ endif
 ifeq (,$(wildcard ${ROCKCHIP_KERNEL_PATCH}))
 	wget -O ${ROCKCHIP_KERNEL_PATCH} https://github.com/tomato64/openwrt-rockchip-kernel/releases/download/${ROCKCHIP_KERNEL_VERSION}/00001-openwrt-rockchip-kernel-${ROCKCHIP_KERNEL_VERSION}.patch
 endif
-	mkdir -p tomato64/board/arm64/r6s/linux-patches
-	cp ${ROCKCHIP_KERNEL_PATCH} tomato64/board/arm64/r6s/linux-patches/
+	cp ${ROCKCHIP_KERNEL_PATCH} tomato64/board/arm64/common/linux-patches-rk/
 	@touch $@
 
 .DEFAULT:

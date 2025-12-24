@@ -1,0 +1,1 @@
+LABEL=nvram /nvram f2fs rw,sync 0 0

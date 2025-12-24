@@ -87,6 +87,11 @@ function upgrade() {
 			name: 'R6S',
 			message: 'r6s'
 		}
+		'FriendlyElec NanoPi NEO3': {
+			regex: /neo3(?!\d)/i,
+			name: 'NEO3',
+			message: 'neo3'
+		}
 	};
 
 	// Validate filename matches device model

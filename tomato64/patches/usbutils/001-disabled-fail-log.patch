@@ -1,0 +1,18 @@
+diff -rupN usbutils-018/lsusb.c usbutils-018-patched/lsusb.c
+--- usbutils-018/lsusb.c	2024-10-22 11:33:33.000000000 +0200
++++ usbutils-018-patched/lsusb.c	2025-12-15 21:16:11.958176783 +0100
+@@ -3891,12 +3891,11 @@ int main(int argc, char *argv[])
+ 			return EXIT_FAILURE;
+ 	}
+ 
++	status = 0;
+ 
+ 	/* by default, print names as well as numbers */
+ 	if (names_init() < 0)
+-		fprintf(stderr, "unable to initialize usb spec");
+-
+-	status = 0;
++		status = -1;
+ 
+ 	if (treemode) {
+ 		status = lsusb_t();

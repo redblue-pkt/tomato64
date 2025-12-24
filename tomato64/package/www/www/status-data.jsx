@@ -62,6 +62,7 @@ stats.cpumhz = sysinfo.cpuclk+'-core)';
 /* TOMATO64-REMOVE-END */
 /* TOMATO64-BEGIN */
 stats.cpumhz = sysinfo.cpuclk+' MHz';
+stats.cpugov = sysinfo.cpugovernor;
 /* TOMATO64-END */
 stats.cputemp = sysinfo.cputemp+'°';
 stats.systemtype = sysinfo.systemtype;

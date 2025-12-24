@@ -653,6 +653,10 @@ ifeq ($(PLATFORM_R6S),y)
 	sed -i $(INSTALLDIR)/www/status-overview.asp -e "/TOMATO64-R6S-REMOVE-BEGIN/,/TOMATO64-R6S-REMOVE-END/d"
 endif
 
+ifeq ($(PLATFORM_NEO3),y)
+	sed -i $(INSTALLDIR)/www/status-overview.asp -e "/TOMATO64-NEO3-REMOVE-BEGIN/,/TOMATO64-NEO3-REMOVE-END/d"
+endif
+
 # Only include TFTP if it is compiled in
 ifneq ($(TCONFIG_USB_EXTRAS),y)
 	sed -i $(INSTALLDIR)/www/advanced-dhcpdns.asp -e "/TFTP-BEGIN/,/TFTP-END/d"

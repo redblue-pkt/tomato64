@@ -635,6 +635,7 @@ void asp_sysinfo(int argc, char **argv)
 #ifdef TOMATO64
 	diskinfo_t disk;
 	char cpu_model[64];
+	char cpugovernor[64];
 #endif /* TOMATO64 */
 	char system_type[64];
 	char cpuclk[32];
@@ -653,7 +654,7 @@ void asp_sysinfo(int argc, char **argv)
 	char *f = NULL;
 	const char procstat[] = "/proc/stat";
 
-	get_cpuinfo(system_type, sizeof(system_type), cpuclk, sizeof(cpuclk), cputemp, sizeof(cputemp));
+	get_cpuinfo(system_type, sizeof(system_type), cpuclk, sizeof(cpuclk), cputemp, sizeof(cputemp), cpugovernor, sizeof(cpugovernor));
 #else
 	get_cpuinfo(system_type, sizeof(system_type), cpuclk, sizeof(cpuclk));
 #endif
@@ -703,6 +704,7 @@ void asp_sysinfo(int argc, char **argv)
 	           "\tcpumodel: '%s',\n"
 	           "\tcpucount: '%d',\n"
 	           "\tniccount: '%d',\n"
+	           "\tcpugovernor: '%s',\n"
 	           "\tdisktotal: '%.0f',\n"
 	           "\tdiskfree: '%.0f'",
 #endif /* TOMATO64 */
@@ -730,6 +732,7 @@ void asp_sysinfo(int argc, char **argv)
 	           cpu_model,
 	           get_nprocs(),
 	           nvram_get_int("nics"),
+	           cpugovernor,
 		   disk.total,
 		   disk.free);
 #endif /* TOMATO64 */

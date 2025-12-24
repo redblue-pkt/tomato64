@@ -47,6 +47,11 @@ if [ "$PLATFORM_R6S" == y ]; then
 	echo "$VERSION NanoPi R6S AIO" >>						tomato_version
 fi
 
+if [ "$PLATFORM_NEO3" == y ]; then
+	echo "#define TOMATO_VERSION		\"$VERSION NEO3 AIO\"" >>		tomato_version.h
+	echo "$VERSION NEO3 AIO" >>							tomato_version
+fi
+
 echo "#define TOMATO_SHORTVER		\"$VERSION\"" >>			tomato_version.h
 
 if [ ! -n "$TAGS" ]; then

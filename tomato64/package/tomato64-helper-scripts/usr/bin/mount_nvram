@@ -1,25 +1,85 @@
 #!/bin/sh
+set -e
 
 s=0
 timeout=15
+
+pick_fstab_for_nvram() {
+	base="/rom/etc/fstab.nvram"
+
+	src=""
+	if [ -f "$base" ]; then
+		src="$(awk '$2=="/nvram"{print $1; exit}' "$base" 2>/dev/null || true)"
+	fi
+
+	if [ -z "$src" ]; then
+		for f in /rom/etc/fstab.*.nvram; do
+			[ -f "$f" ] || continue
+			src="$(awk '$2=="/nvram"{print $1; exit}' "$f" 2>/dev/null || true)"
+			[ -n "$src" ] && break
+		done
+	fi
+
+	[ -n "$src" ] || return 0
+
+	dev=""
+
+	case "$src" in
+		/dev/*)
+			dev="$src"
+		;;
+		LABEL=*)
+			label="${src#LABEL=}"
+			dev="$(blkid -L "$label" 2>/dev/null || true)"
+		;;
+		UUID=*)
+			uuid="${src#UUID=}"
+			dev="$(blkid -U "$uuid" 2>/dev/null || true)"
+		;;
+		PARTUUID=*)
+			puuid="${src#PARTUUID=}"
+			dev="$(blkid -t "PARTUUID=$puuid" -o device 2>/dev/null | head -n1 || true)"
+		;;
+	esac
+
+	[ -n "$dev" ] || return 0
+
+	fstype="$(blkid -o value -s TYPE "$dev" 2>/dev/null || true)"
+	[ -n "$fstype" ] || return 0
+
+	case "$fstype" in
+		ext2|ext3|ext4|f2fs|xfs)
+			candidate="/rom/etc/fstab.${fstype}.nvram"
+			[ -f "$candidate" ] && echo "$candidate"
+		;;
+	esac
+}
+
 while ! mountpoint -q /nvram
 do
-	if [ $s -gt $timeout ]; then
+	if [ "$s" -gt "$timeout" ]; then
 		echo "Unable to mount nvram, config will not be persistent!" > /dev/console
 		break
 	fi
 
-	mount -T /rom/etc/fstab.nvram -a
+	fstab="$(pick_fstab_for_nvram)"
 
-	if ! mountpoint -q /nvram
-	then
+	if [ -n "$fstab" ]; then
+		mount -T "$fstab" -a || true
+	else
+		for t in ext4 ext3 ext2 f2fs xfs; do
+			f="/rom/etc/fstab.${t}.nvram"
+			[ -f "$f" ] || continue
+			mount -T "$f" -a && break
+		done
+	fi
+
+	if ! mountpoint -q /nvram; then
 		echo "Waiting for nvram to mount...$s/$timeout" > /dev/console
 		s=$((s+1))
 		sleep 1
-	fi
-
-	if mountpoint -q /nvram
-	then
+	else
 		echo "nvram partition mounted" > /dev/console
 	fi
 done
+

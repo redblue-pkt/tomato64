@@ -1,0 +1,1 @@
+LABEL=nvram /nvram xfs rw,sync 0 0

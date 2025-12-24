@@ -1,0 +1,1 @@
+LABEL=nvram /nvram ext3 rw,sync,barrier,data=journal 0 0

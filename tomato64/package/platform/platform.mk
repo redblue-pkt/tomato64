@@ -33,4 +33,8 @@ ifeq ($(BR2_PACKAGE_PLATFORM_R6S),y)
 export PLATFORM_R6S=y
 endif
 
+ifeq ($(BR2_PACKAGE_PLATFORM_NEO3),y)
+export PLATFORM_NEO3=y
+endif
+
 $(eval $(generic-package))

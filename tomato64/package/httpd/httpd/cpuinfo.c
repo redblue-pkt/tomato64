@@ -66,6 +66,96 @@ static void trim(char *str)
 	return;
 }
 
+#ifdef TOMATO64
+static unsigned int get_cpufreq(void)
+{
+	FILE *fd;
+	char buf[64];
+	unsigned long long khz;
+	char *end;
+	const char *paths[] = {
+		"/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq",
+		"/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq",
+		NULL
+	};
+	const char **p;
+
+	for (p = paths; *p; ++p) {
+		if (access(*p, R_OK) != 0)
+			continue;
+
+		memset(buf, 0, sizeof(buf));
+		if ((fd = fopen(*p, "r")) == NULL)
+			continue;
+
+		if (fgets(buf, sizeof(buf), fd) == NULL) {
+			fclose(fd);
+			continue;
+		}
+		fclose(fd);
+
+		khz = strtoull(buf, &end, 10);
+		if (end == buf)
+			continue;
+
+		if (khz < 1000ULL)
+			return 0;
+
+		if ((khz / 1000ULL) > 20000ULL)
+			return 0;
+
+		return (unsigned int)(khz / 1000ULL);
+	}
+
+	return 0;
+}
+
+static char *get_cpuclk(char *cpuclk, size_t cpuclk_sz, unsigned int mhz)
+{
+	if (!cpuclk || cpuclk_sz == 0)
+		return NULL;
+
+	if (mhz == 0)
+		return NULL;
+
+	snprintf(cpuclk, cpuclk_sz, "%u", mhz);
+	return cpuclk;
+}
+
+static char *get_cpugovernor(void)
+{
+	static char govbuf[64];
+	FILE *fd;
+	const char *paths[] = {
+		"/sys/devices/system/cpu/cpufreq/policy0/scaling_governor",
+		"/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor",
+		NULL
+	};
+	const char **p;
+
+	for (p = paths; *p; ++p) {
+		if (access(*p, R_OK) != 0)
+			continue;
+
+		if ((fd = fopen(*p, "r")) == NULL)
+			continue;
+
+		if (fgets(govbuf, sizeof(govbuf), fd) == NULL) {
+			fclose(fd);
+			continue;
+                }
+		fclose(fd);
+
+		govbuf[strcspn(govbuf, "\r\n")] = '\0';
+
+		if (govbuf[0] != '\0')
+			return govbuf;
+	}
+
+	return NULL;
+}
+#endif
+
 /*
  * - ARM:
  * Processor               : ARMv7 Processor rev 0 (v7l
@@ -82,7 +172,8 @@ static int strncmp_ex(char *str1, char *str2)
 }
 
 #ifdef TCONFIG_BCMARM
-void get_cpuinfo(char *system_type, const size_t buf_system_type_sz, char *cpuclk, const size_t buf_cpuclk_sz, char *cputemp, const size_t buf_cputemp_sz)
+void get_cpuinfo(char *system_type, const size_t buf_system_type_sz, char *cpuclk, const size_t buf_cpuclk_sz, char *cputemp, const size_t buf_cputemp_sz,
+                 char* cpugovernor, const size_t buf_cpugovernor_sz)
 #else
 void get_cpuinfo(char *system_type, const size_t buf_system_type_sz, char *cpuclk, const size_t buf_cpuclk_sz)
 #endif
@@ -159,15 +250,41 @@ void get_cpuinfo(char *system_type, const size_t buf_system_type_sz, char *cpucl
 	}
 #endif
 #ifdef TOMATO64_ARM64
+	int cpu_freq = get_cpufreq();
+	char *cpu_gov = get_cpugovernor();
+	if (!cpu_gov) {
+		strlcpy(cpugovernor, "NONE", buf_cpugovernor_sz);
+	} else {
+		strlcpy(cpugovernor, cpu_gov, buf_cpugovernor_sz);
+	}
 #if TOMATO64_RPI4
 	strlcpy(system_type, "Broadcom BCM2711", buf_system_type_sz);
-	strlcpy(cpuclk, "1800", buf_cpuclk_sz);
+	if (cpu_freq > 0) {
+		strlcpy(cpuclk, get_cpuclk(cpuclk, buf_cpuclk_sz, cpu_freq), buf_cpuclk_sz);
+	} else {
+		strlcpy(cpuclk, "1800", buf_cpuclk_sz);
+	}
 #elif TOMATO64_R6S
 	strlcpy(system_type, "Rockchip RK3588S", buf_system_type_sz);
-	strlcpy(cpuclk, "2400", buf_cpuclk_sz);
+	if (cpu_freq > 0) {
+		strlcpy(cpuclk, get_cpuclk(cpuclk, buf_cpuclk_sz, cpu_freq), buf_cpuclk_sz);
+	} else {
+		strlcpy(cpuclk, "2400", buf_cpuclk_sz);
+	}
+#elif TOMATO64_NEO3
+	strlcpy(system_type, "Rockchip RK3328", buf_system_type_sz);
+	if (cpu_freq > 0) {
+		strlcpy(cpuclk, get_cpuclk(cpuclk, buf_cpuclk_sz, cpu_freq), buf_cpuclk_sz);
+	} else {
+		strlcpy(cpuclk, "1300", buf_cpuclk_sz);
+	}
 #else
 	strlcpy(system_type, "MediaTek Filogic 830", buf_system_type_sz);
-	strlcpy(cpuclk, "2000", buf_cpuclk_sz);
+	if (cpu_freq > 0) {
+		strlcpy(cpuclk, get_cpuclk(cpuclk, buf_cpuclk_sz, cpu_freq), buf_cpuclk_sz);
+	} else {
+		strlcpy(cpuclk, "2000", buf_cpuclk_sz);
+	}
 #endif
 	FILE *f;
 	char buffer[8];
@@ -175,6 +292,8 @@ void get_cpuinfo(char *system_type, const size_t buf_system_type_sz, char *cpucl
 
 #if TOMATO64_R6S
 	const char cmd[] = "sensors -A package_thermal-virtual-0 | grep 'temp1' | awk '{print $2}' | sed 's/+//; s/°C//'";
+#elif TOMATO64_NEO3
+	const char cmd[] = "sensors -A soc_thermal-virtual-0 | grep 'temp1' | awk '{print $2}' | sed 's/+//; s/°C//'";
 #else
 	const char cmd[] = "sensors -A cpu_thermal-virtual-0 | grep 'temp1' | awk '{print $2}' | sed 's/+//; s/°C//'";
 #endif
@@ -227,6 +346,8 @@ void get_cpumodel(char *cpumodel, const size_t buf_cpumodel_sz)
 	strlcpy(cpumodel, "ARM Cortex-A72", buf_cpumodel_sz);
 #elif TOMATO64_R6S
 	strlcpy(cpumodel, "ARM Cortex-A76 / A55", buf_cpumodel_sz);
+#elif TOMATO64_NEO3
+	strlcpy(cpumodel, "ARM Cortex-A53", buf_cpumodel_sz);
 #else
 	strlcpy(cpumodel, "MediaTek MT7986AV (Cortex-A53)", buf_cpumodel_sz);
 #endif

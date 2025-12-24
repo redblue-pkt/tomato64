@@ -42,7 +42,7 @@ extern void common_redirect(void);
 extern char* get_wl_tempsense(char *buf, const size_t buf_sz);
 #endif
 #ifdef TCONFIG_BCMARM
-extern void get_cpuinfo(char *system_type, const size_t buf1_sz, char *cpuclk, const size_t buf2_sz, char *cputemp, const size_t buf3_sz);
+extern void get_cpuinfo(char *system_type, const size_t buf1_sz, char *cpuclk, const size_t buf2_sz, char *cputemp, const size_t buf3_sz, char* cpugovernor, const size_t buf4_sz);
 #else
 extern void get_cpuinfo(char *system_type, const size_t buf1_sz, char *cpuclk, const size_t buf2_sz);
 #endif
