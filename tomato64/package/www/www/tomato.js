@@ -3278,6 +3278,16 @@ var PortNames = {
 				4: '4'
 			};
 		}
+		else if (model === 'FriendlyElec NanoPi R62') {
+			this._hardwareLabels = {
+				0: 'WAN',
+				1: 'LAN1'
+			};
+			this._vlanLabels = {
+				0: 'WAN',
+				1: '1'
+			};
+		}
 		else { /* x86_64 or device not yet configured */
 			this._hardwareLabels = {
 				0: 'eth0',

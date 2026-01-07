@@ -2,7 +2,7 @@
 set -e
 
 s=0
-timeout=15
+timeout=3
 
 pick_fstab_for_nvram() {
 	base="/rom/etc/fstab.nvram"

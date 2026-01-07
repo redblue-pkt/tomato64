@@ -1,0 +1,109 @@
+#!/bin/sh
+
+set -e
+set -x
+
+. /usr/sbin/nvram_ops
+
+# NanoPi R2S has 2 ethernet ports
+# eth0 has the constant hardware MAC (RTL8211F PHY on RGMII)
+# eth1 are derived sequentially from eth0
+
+# Function to add offset to MAC address
+macaddr_add() {
+	local mac=$1
+	local offset=$2
+
+	# Remove colons and convert to decimal
+	local mac_hex=$(echo "$mac" | tr -d ':')
+	local mac_dec=$(printf "%d" "0x${mac_hex}")
+
+	# Add offset
+	local new_dec=$((mac_dec + offset))
+
+	# Convert back to hex and format as MAC
+	printf "%012X" "$new_dec" | sed 's/\(..\)/\1:/g; s/:$//'
+}
+
+if [ "$(NG set_macs)" != "1" ]; then
+
+	# eth0 has the constant hardware MAC - use it as base
+	ethXmacaddr=$(cat /sys/class/net/eth0/address | tr '[:lower:]' '[:upper:]')
+
+	# Derive eth0 and eth1 sequentially (eth0 = base, eth1 = base+1)
+	eth0macaddr="$ethXmacaddr"
+	eth1macaddr=$(macaddr_add "$ethXmacaddr" +1)
+
+	NS "eth0macaddr=$eth0macaddr"
+	NS "eth1macaddr=$eth1macaddr"
+
+	# Apply MAC addresses
+	ip link set dev eth0 address "$eth0macaddr"
+	ip link set dev eth1 address "$eth1macaddr"
+
+	echo "eth0 mac $eth0macaddr" >> /etc/iftab
+	echo "eth1 mac $eth1macaddr" >> /etc/iftab
+
+	# Set WAN MAC (eth0 is WAN on Tomato64)
+	for i in wan_hwaddr wan_mac; do
+		NS "${i}=$eth0macaddr"
+	done
+
+	# Set LAN MAC (eth1 are LAN)
+	NS "lan_hwaddr=$eth1macaddr"
+
+	NS set_macs=1
+
+else
+
+	# Apply stored MAC addresses
+	ip link set dev eth0 address "$(NG eth0macaddr)"
+	ip link set dev eth1 address "$(NG eth1macaddr)"
+	# eth0 already has its hardware MAC, no need to set
+
+	echo "eth0 mac $(NG eth0macaddr)" >> /etc/iftab
+	echo "eth1 mac $(NG eth1macaddr)" >> /etc/iftab
+fi
+
+if [ "$(NG stealth_modee)" != "1" ]; then
+	if [ -e /sys/class/leds/red:status/brightness ]; then
+		echo 1 > /sys/class/leds/red:status/brightness
+	fi
+
+	# green:lan
+	if [ -e /sys/class/leds/green:lan/trigger ]; then
+		echo none > /sys/class/leds/green:lan/trigger
+		echo netdev > /sys/class/leds/green:lan/trigger
+	fi
+	if [ -e /sys/class/leds/green:lan/device_name ]; then
+		echo eth1 > /sys/class/leds/green:lan/device_name
+	fi
+	if [ -e /sys/class/leds/green:lan/link ]; then
+		echo 1 > /sys/class/leds/green:lan/link
+	fi
+	if [ -e /sys/class/leds/green:lan/tx ]; then
+		echo 1 > /sys/class/leds/green:lan/tx
+	fi
+	if [ -e /sys/class/leds/green:lan/rx ]; then
+		echo 1 > /sys/class/leds/green:lan/rx
+	fi
+
+	# green:wan
+	if [ -e /sys/class/leds/green:wan/trigger ]; then
+		echo none > /sys/class/leds/green:wan/trigger
+		echo netdev > /sys/class/leds/green:wan/trigger
+	fi
+	if [ -e /sys/class/leds/green:wan/device_name ]; then
+		echo eth0 > /sys/class/leds/green:wan/device_name
+	fi
+	if [ -e /sys/class/leds/green:wan/link ]; then
+		echo 1 > /sys/class/leds/green:wan/link
+	fi
+	if [ -e /sys/class/leds/green:wan/tx ]; then
+		echo 1 > /sys/class/leds/green:wan/tx
+	fi
+	if [ -e /sys/class/leds/green:wan/rx ]; then
+		echo 1 > /sys/class/leds/green:wan/rx
+	fi
+fi
+

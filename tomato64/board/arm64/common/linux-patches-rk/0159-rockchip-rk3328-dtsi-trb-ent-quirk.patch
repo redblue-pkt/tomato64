@@ -52,7 +52,7 @@ index 4e30c5279ac6..303680413ed9 100644
  		snps,dis-del-phy-power-chg-quirk;
  		snps,dis_enblslpm_quirk;
  		snps,dis-tx-ipgap-linecheck-quirk;
-+        snps,xhci-trb-ent-quirk;
++		snps,xhci-trb-ent-quirk;
  		snps,dis-u2-freeclk-exists-quirk;
  		snps,dis_u2_susphy_quirk;
  		snps,dis_u3_susphy_quirk;

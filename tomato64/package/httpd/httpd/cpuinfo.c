@@ -278,6 +278,13 @@ void get_cpuinfo(char *system_type, const size_t buf_system_type_sz, char *cpucl
 	} else {
 		strlcpy(cpuclk, "1300", buf_cpuclk_sz);
 	}
+#elif TOMATO64_R2S
+	strlcpy(system_type, "Rockchip RK3328", buf_system_type_sz);
+	if (cpu_freq > 0) {
+		strlcpy(cpuclk, get_cpuclk(cpuclk, buf_cpuclk_sz, cpu_freq), buf_cpuclk_sz);
+	} else {
+		strlcpy(cpuclk, "1300", buf_cpuclk_sz);
+	}
 #else
 	strlcpy(system_type, "MediaTek Filogic 830", buf_system_type_sz);
 	if (cpu_freq > 0) {
@@ -293,6 +300,8 @@ void get_cpuinfo(char *system_type, const size_t buf_system_type_sz, char *cpucl
 #if TOMATO64_R6S
 	const char cmd[] = "sensors -A package_thermal-virtual-0 | grep 'temp1' | awk '{print $2}' | sed 's/+//; s/°C//'";
 #elif TOMATO64_NEO3
+	const char cmd[] = "sensors -A soc_thermal-virtual-0 | grep 'temp1' | awk '{print $2}' | sed 's/+//; s/°C//'";
+#elif TOMATO64_R2S
 	const char cmd[] = "sensors -A soc_thermal-virtual-0 | grep 'temp1' | awk '{print $2}' | sed 's/+//; s/°C//'";
 #else
 	const char cmd[] = "sensors -A cpu_thermal-virtual-0 | grep 'temp1' | awk '{print $2}' | sed 's/+//; s/°C//'";
@@ -347,6 +356,8 @@ void get_cpumodel(char *cpumodel, const size_t buf_cpumodel_sz)
 #elif TOMATO64_R6S
 	strlcpy(cpumodel, "ARM Cortex-A76 / A55", buf_cpumodel_sz);
 #elif TOMATO64_NEO3
+	strlcpy(cpumodel, "ARM Cortex-A53", buf_cpumodel_sz);
+#elif TOMATO64_R2S
 	strlcpy(cpumodel, "ARM Cortex-A53", buf_cpumodel_sz);
 #else
 	strlcpy(cpumodel, "MediaTek MT7986AV (Cortex-A53)", buf_cpumodel_sz);

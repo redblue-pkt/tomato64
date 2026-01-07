@@ -13,31 +13,14 @@ if [ "$(NG set_macs)" == "0" ]; then
 		fi
 	done
 
-	if [ "$(NG wan_invert)" == "1" ]; then
-		if [ -e /sys/class/net/eth0/address ]; then
-			for i in wan_hwaddr wan_mac;
-			do
-				NS ${i}=`ifconfig eth0 | grep -o -E ..:..:..:..:..:..`
-			done
-		fi
-	else
-		if [ -e /sys/class/net/eth1/address ]; then
-			for i in wan_hwaddr wan_mac;
-			do
-				NS ${i}=`ifconfig eth1 | grep -o -E ..:..:..:..:..:..`
-			done
-		fi
-	fi
+	for i in wan_hwaddr wan_mac;
+	do
+		NS ${i}=`ifconfig eth0 | grep -o -E ..:..:..:..:..:..`
+	done
 
 	NS set_macs=1
 fi
 
-if [ "$(NG wan_invert)" == "1" ]; then
-	if [ "$(NG et0macaddr)" == "" ]; then
-		NS et0macaddr=`ifconfig eth1 | grep -o -E ..:..:..:..:..:..`
-	fi
-else
-	if [ "$(NG et0macaddr)" == "" ]; then
-		NS et0macaddr=`ifconfig eth0 | grep -o -E ..:..:..:..:..:..`
-	fi
+if [ "$(NG et0macaddr)" == "" ]; then
+	NS et0macaddr=`ifconfig eth1 | grep -o -E ..:..:..:..:..:..`
 fi

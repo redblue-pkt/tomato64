@@ -21,6 +21,9 @@ rpi4: .configure-rpi4
 neo3: .configure-neo3
 	make -C src/buildroot
 
+r2s: .configure-r2s
+	make -C src/buildroot
+
 bpi-r3: .configure-bpi-r3
 	make -C src/buildroot
 
@@ -40,6 +43,9 @@ rpi4-menuconfig: .configure-rpi4
 	make -C src/buildroot menuconfig
 
 neo3-menuconfig: .configure-neo3
+	make -C src/buildroot menuconfig
+
+r2s-menuconfig: .configure-r2s
 	make -C src/buildroot menuconfig
 
 bpi-r3-menuconfig: .configure-bpi-r3
@@ -75,6 +81,11 @@ distclean:
 
 .configure-neo3: .download-rockchip-kernel .patch
 	make -C src/buildroot BR2_EXTERNAL=../../tomato64 neo3_defconfig
+	@touch $@
+	@touch .configure
+
+.configure-r2s: .download-rockchip-kernel .patch
+	make -C src/buildroot BR2_EXTERNAL=../../tomato64 r2s_defconfig
 	@touch $@
 	@touch .configure
 
